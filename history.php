@@ -9,6 +9,7 @@ $user = current_user($pdo);
 // --- LOGIKA FILTER BARU ---
 $filter_status = $_GET['status'] ?? 'all'; 
 
+// Kueri SQL untuk mengambil data pengaduan
 $sql = "SELECT id, title, description, status, DATE_FORMAT(created_at, '%d %M %Y') as created_at FROM complaints WHERE user_id = :user_id";
 $params = ['user_id' => $user['id']];
 
@@ -17,7 +18,8 @@ if ($filter_status !== 'all' && in_array($filter_status, ['pending', 'process', 
     $params['status'] = $filter_status;
 }
 
-$sql .= " ORDER BY created_at DESC";
+// INI BAGIAN YANG DIPERBAIKI
+$sql .= " ORDER BY id DESC";
 
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
