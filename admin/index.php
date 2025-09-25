@@ -56,8 +56,9 @@ $complaints = $stmt->fetchAll(PDO::FETCH_ASSOC);
         --secondary: #3a0ca3;
         --light: #f8f9fa;
         --dark: #212529;
-        --success: #4cc9f0;
-        --warning: #f9c74f;
+        --success: #20c997; /* Warna hijau yang lebih bagus */
+        --warning: #fd7e14; /* Warna oranye yang lebih bagus */
+        --info: #0dcaf0;
         --danger: #f94144;
     }
     body { 
@@ -89,7 +90,7 @@ $complaints = $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
     .dashboard-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
         gap: 20px;
         margin-bottom: 30px;
     }
@@ -103,16 +104,21 @@ $complaints = $stmt->fetchAll(PDO::FETCH_ASSOC);
         gap: 15px;
     }
     .card .icon {
-        font-size: 2rem;
-        padding: 15px;
+        font-size: 1.8rem;
+        padding: 18px;
         border-radius: 50%;
         color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
-    .card.total .icon { background: var(--primary); }
+    .card.total .icon { background: var(--secondary); }
     .card.pending .icon { background: var(--warning); }
+    .card.process .icon { background: var(--primary); }
     .card.resolved .icon { background: var(--success); }
-    .card-title { font-size: 1rem; color: #6c757d; }
-    .card-value { font-size: 1.8rem; font-weight: 700; color: var(--dark); }
+
+    .card-title { font-size: 0.9rem; color: #6c757d; }
+    .card-value { font-size: 1.7rem; font-weight: 700; color: var(--dark); }
 
     .table-container {
         background: white;
@@ -138,9 +144,9 @@ $complaints = $stmt->fetchAll(PDO::FETCH_ASSOC);
         background-color: #f1f3f5;
     }
     .status { font-weight: 600; }
-    .status-pending { color: #fd7e14; }
+    .status-pending { color: var(--warning); }
     .status-process { color: var(--primary); }
-    .status-resolved { color: #20c997; }
+    .status-resolved { color: var(--success); }
 
     a.btn {
         padding: 6px 12px;
@@ -180,10 +186,17 @@ $complaints = $stmt->fetchAll(PDO::FETCH_ASSOC);
             </div>
         </div>
         <div class="card pending">
-            <div class="icon"><i class="fas fa-clock"></i></div>
+            <div class="icon"><i class="fas fa-hourglass-start"></i></div>
             <div>
-                <div class="card-title">Perlu Diproses</div>
-                <div class="card-value"><?= $counts['pending'] + $counts['process'] ?></div>
+                <div class="card-title">Pending</div>
+                <div class="card-value"><?= $counts['pending'] ?></div>
+            </div>
+        </div>
+        <div class="card process">
+            <div class="icon"><i class="fas fa-tasks"></i></div>
+            <div>
+                <div class="card-title">Diproses</div>
+                <div class="card-value"><?= $counts['process'] ?></div>
             </div>
         </div>
         <div class="card resolved">
