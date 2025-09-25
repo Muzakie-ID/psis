@@ -1,253 +1,120 @@
 document.addEventListener('DOMContentLoaded', function() {
-            const menuItems = document.querySelectorAll('.menu-item');
-            const pages = {
-                'dashboard': document.getElementById('dashboard-page'),
-                'complaint': document.getElementById('complaint-page'),
-                'physical-psychical': document.getElementById('physical-psychical-page'),
-                'history': document.getElementById('history-page'),
-                'profile': document.getElementById('profile-page'),
-                'settings': document.getElementById('settings-page')
-            };
-            const pageTitle = document.getElementById('page-title');
-            const menuToggle = document.getElementById('menu-toggle');
-            const sidebar = document.getElementById('sidebar');
-            
-            // Data untuk jenis masalah berdasarkan tipe
-            const issueTypes = {
-                physical: [
-                    "Cedera Olahraga",
-                    "Kecelakaan di Sekolah",
-                    "Penyakit Mendadak",
-                    "Kekerasan Fisik",
-                    "Lainnya"
-                ],
-                psychical: [
-                    "Stres Akademik",
-                    "Kecemasan",
-                    "Depresi",
-                    "Bullying/Perundungan",
-                    "Masalah Keluarga",
-                    "Lainnya"
-                ]
-            };
-            
-                
-                // Tampilkan halaman yang dipilih
-                if (pages[pageId]) {
-                    pages[pageId].classList.add('active');
-                    const activeMenuItem = document.querySelector(`.menu-item[data-page="${pageId}"] .menu-text`);
-                    if (activeMenuItem) {
-                        pageTitle.textContent = activeMenuItem.textContent;
-                    }
+    // --- SCRIPT UNTUK NAVIGASI TAB/PAGE DI DASHBOARD ---
+    const pageTitle = document.getElementById('page-title');
+
+    function showPageFromHash() {
+        if (!document.getElementById('dashboard-page')) return; // Hanya berjalan jika di dashboard
+
+        const hash = window.location.hash.substring(1);
+        const targetPage = hash || 'dashboard';
+        const pageElement = document.getElementById(targetPage + '-page');
+
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.menu-item[data-page]').forEach(m => m.classList.remove('active'));
+
+        if (pageElement) {
+            pageElement.classList.add('active');
+            const menuItem = document.querySelector(`.menu-item[data-page="${targetPage}"]`);
+            if (menuItem) {
+                menuItem.classList.add('active');
+                const menuText = menuItem.querySelector('.menu-text');
+                if (pageTitle && menuText) {
+                    pageTitle.textContent = menuText.textContent;
                 }
-                
-                // Perbarui menu aktif
-                menuItems.forEach(item => {
-                    item.classList.remove('active');
-                    if (item.getAttribute('data-page') === pageId) {
-                        item.classList.add('active');
-                    }
-                });
             }
-            
-            // Event listener untuk menu item
-            menuItems.forEach(item => {
+        } else {
+            // Fallback jika hash tidak valid
+            const dashboardPage = document.getElementById('dashboard-page');
+            const dashboardMenuItem = document.querySelector('.menu-item[data-page="dashboard"]');
+            if (dashboardPage) dashboardPage.classList.add('active');
+            if (dashboardMenuItem) dashboardMenuItem.classList.add('active');
+            if (pageTitle) pageTitle.textContent = 'Dashboard';
+        }
+    }
+
+    // Jalankan fungsi navigasi hash jika elemen yang relevan ada
+    if (pageTitle) {
+        showPageFromHash();
+        window.addEventListener('hashchange', showPageFromHash); // Tambahkan listener untuk perubahan hash
+
+        document.querySelectorAll('.menu-item[data-page]').forEach(item => {
+            item.addEventListener('click', (event) => {
+                event.preventDefault();
                 const pageId = item.getAttribute('data-page');
-                if (pageId) {
-                    item.addEventListener('click', () => {
-                        showPage(pageId);
-                    });
-                }
+                window.location.hash = pageId;
             });
-            
-            // Event listener untuk toggle menu di mobile
-            menuToggle.addEventListener('click', () => {
-                sidebar.classList.toggle('active');
-            });
-            
-            // Fungsi untuk halaman pengaduan fisik/psikis
-            const typeButtons = document.querySelectorAll('.type-btn');
-            const issueTypeSelect = document.getElementById('issue-type');
-            let selectedType = '';
-            let selectedTeacherId = null;
-            
-            // Event listener untuk memilih tipe pengaduan
-            typeButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    // Hapus seleksi sebelumnya
-                    typeButtons.forEach(btn => btn.classList.remove('selected'));
-                    
-                    // Tandai yang dipilih
-                    button.classList.add('selected');
-                    
-                    // Simpan tipe yang dipilih
-                    selectedType = button.getAttribute('data-type');
-                    
-                    // Isi opsi jenis masalah berdasarkan tipe
-                    issueTypeSelect.innerHTML = '<option value="">Pilih jenis masalah</option>';
-                    
-                    if (selectedType && issueTypes[selectedType]) {
-                        issueTypes[selectedType].forEach(issue => {
-                            const option = document.createElement('option');
-                            option.value = issue.toLowerCase().replace(/\s+/g, '-');
-                            option.textContent = issue;
-                            issueTypeSelect.appendChild(option);
-                        });
-                    }
-                });
-            });
-            
-            // Event listener untuk memilih guru
-            const teacherCards = document.querySelectorAll('.teacher-card');
-            teacherCards.forEach(card => {
-                card.addEventListener('click', () => {
-                    // Hapus seleksi sebelumnya
-                    teacherCards.forEach(c => c.classList.remove('selected'));
-                    
-                    // Tandai yang dipilih
-                    card.classList.add('selected');
-                    
-                    // Simpan ID guru yang dipilih
-                    selectedTeacherId = card.getAttribute('data-teacher-id');
-                });
-            });
-            
-            // Event listener untuk tombol kirim pengaduan fisik/psikis
-            const submitPpBtn = document.getElementById('submit-pp-btn');
-            const confirmationModal = document.getElementById('confirmation-modal');
-            const modalCloseBtn = document.getElementById('modal-close-btn');
-            const modalDashboardBtn = document.getElementById('modal-dashboard-btn');
-            const teacherNameConfirm = document.getElementById('teacher-name-confirm');
-            
-            submitPpBtn.addEventListener('click', () => {
-                // Validasi form
-                if (!selectedType) {
-                    alert('Silakan pilih jenis pengaduan (Fisik atau Psikis)');
-                    return;
-                }
-                
-                if (!issueTypeSelect.value) {
-                    alert('Silakan pilih jenis masalah');
-                    return;
-                }
-                
-                if (!selectedTeacherId) {
-                    alert('Silakan pilih guru yang dituju');
-                    return;
-                }
-                
-                // Dapatkan nama guru yang dipilih
-                const selectedTeacherCard = document.querySelector(`.teacher-card[data-teacher-id="${selectedTeacherId}"]`);
-                const teacherName = selectedTeacherCard.querySelector('.teacher-name').textContent;
-                
-                // Tampilkan nama guru di modal konfirmasi
-                teacherNameConfirm.textContent = teacherName;
-                
-                // Tampilkan modal konfirmasi
-                confirmationModal.style.display = 'flex';
-            });
-            
-            // Event listener untuk tombol di modal
-            modalCloseBtn.addEventListener('click', () => {
-                confirmationModal.style.display = 'none';
-            });
-            
-            modalDashboardBtn.addEventListener('click', () => {
-                confirmationModal.style.display = 'none';
-                showPage('dashboard');
-            });
-            
-            // Pengaturan Tab System
-            const settingsTabs = document.querySelectorAll('.settings-tab');
-            const settingsContents = document.querySelectorAll('.settings-content');
-            
-            settingsTabs.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    const tabId = tab.getAttribute('data-tab');
-                    
-                    // Hapus kelas aktif dari semua tab dan konten
-                    settingsTabs.forEach(t => t.classList.remove('active'));
-                    settingsContents.forEach(c => c.classList.remove('active'));
-                    
-                    // Tambahkan kelas aktif ke tab dan konten yang dipilih
-                    tab.classList.add('active');
-                    document.getElementById(`${tabId}-tab`).classList.add('active');
-                });
-            });
-            
-            // Password Strength Indicator
-            const newPasswordInput = document.getElementById('new-password');
-            const passwordStrengthBar = document.querySelector('.password-strength-bar');
-            const passwordStrengthContainer = document.querySelector('.password-strength');
-            
-            newPasswordInput.addEventListener('input', function() {
-                const password = this.value;
-                let strength = 0;
-                
-                // Kriteria kekuatan password
-                if (password.length >= 8) strength++;
-                if (/[a-z]/.test(password)) strength++;
-                if (/[A-Z]/.test(password)) strength++;
-                if (/[0-9]/.test(password)) strength++;
-                if (/[^a-zA-Z0-9]/.test(password)) strength++;
-                
-                // Reset classes
-                passwordStrengthContainer.classList.remove('password-weak', 'password-medium', 'password-strong');
-                
-                // Set classes based on strength
-                if (password.length === 0) {
-                    passwordStrengthBar.style.width = '0%';
-                } else if (strength <= 2) {
-                    passwordStrengthContainer.classList.add('password-weak');
-                } else if (strength <= 4) {
-                    passwordStrengthContainer.classList.add('password-medium');
-                } else {
-                    passwordStrengthContainer.classList.add('password-strong');
-                }
-            });
-            
-            // Logout Functionality
-            const logoutBtn = document.getElementById('logout-btn');
-            const logoutModal = document.getElementById('logout-modal');
-            const logoutCancelBtn = document.getElementById('logout-cancel-btn');
-            const logoutConfirmBtn = document.getElementById('logout-confirm-btn');
-            const logoutUserName = document.getElementById('logout-user-name');
-            
-            // Set user name in logout modal
-            const userName = document.querySelector('.user-name').textContent;
-            logoutUserName.textContent = userName;
-            
-            // Show logout modal when logout button is clicked
-            logoutBtn.addEventListener('click', () => {
-                logoutModal.style.display = 'flex';
-            });
-            
-            // Hide logout modal when cancel button is clicked
-            logoutCancelBtn.addEventListener('click', () => {
-                logoutModal.style.display = 'none';
-            });
-            
-            // Redirect to index.php when logout is confirmed
-            logoutConfirmBtn.addEventListener('click', () => {
-                // Simulate logout process
-                // In a real application, you would also clear session/cookie data
-                window.location.href = '../index.php';
-            });
-            
-            // Responsive check
-            function checkWidth() {
-                if (window.innerWidth <= 768) {
-                    menuToggle.style.display = 'flex';
-                    sidebar.classList.remove('active');
-                } else {
-                    menuToggle.style.display = 'none';
-                    sidebar.classList.add('active');
-                }
-            }
-            
-            // Initial check
-            checkWidth();
-            
-            // Listen for window resize
-            window.addEventListener('resize', checkWidth);
         });
+    }
+
+
+    // --- SCRIPT UNTUK MEMUAT PENGADUAN TERBARU DI DASHBOARD ---
+    const complaintList = document.getElementById('complaint-list');
+    if (complaintList) {
+        fetch('get_complaints.php')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            complaintList.innerHTML = '';
+            if (!Array.isArray(data) || data.length === 0) {
+                complaintList.innerHTML = '<p style="color:#6c757d; text-align:center;">Belum ada pengaduan yang Anda ajukan.</p>';
+                return;
+            }
+            data.forEach(c => {
+                const a = document.createElement('a');
+                a.href = 'view_complaint.php?id=' + c.id;
+                a.className = 'complaint-item-link';
+                a.innerHTML = `
+                    <div class="complaint-item">
+                        <div class="complaint-info">
+                            <h3>${c.title || 'Tanpa Judul'}</h3>
+                            <p>Diajukan pada: ${c.created_at || ''}</p>
+                        </div>
+                        <div class="status status-${c.status || ''}">${c.status ? c.status.charAt(0).toUpperCase() + c.status.slice(1) : ''}</div>
+                    </div>`;
+                complaintList.appendChild(a);
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching complaints:', error);
+            complaintList.innerHTML = '<p style="color:#dc3545; text-align:center;">Gagal memuat data pengaduan.</p>';
+        });
+    }
+
+    
+    // --- FUNGSI MODAL LOGOUT (INI YANG PENTING) ---
+    const logoutBtn = document.getElementById('logout-btn');
+    const logoutModal = document.getElementById('logout-modal');
+    const logoutCancelBtn = document.getElementById('logout-cancel-btn');
+    const logoutUserName = document.getElementById('logout-user-name');
+
+    // Pastikan semua elemen modal ada sebelum menambahkan event listener
+    if (logoutBtn && logoutModal && logoutCancelBtn) {
+        // Tampilkan modal ketika tombol logout diklik
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault(); // Mencegah aksi default jika ada
+            
+            // Mengambil nama user dari header
+            const userNameEl = document.querySelector('.user-name');
+            if (userNameEl && logoutUserName) {
+                logoutUserName.textContent = userNameEl.textContent;
+            }
+            logoutModal.style.display = 'flex';
+        });
+
+        // Sembunyikan modal ketika tombol batal diklik
+        logoutCancelBtn.addEventListener('click', () => {
+            logoutModal.style.display = 'none';
+        });
+
+        // Sembunyikan modal jika mengklik di luar konten modal
+        window.addEventListener('click', (event) => {
+            if (event.target === logoutModal) {
+                logoutModal.style.display = 'none';
+            }
+        });
+    }
+});
