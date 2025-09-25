@@ -13,35 +13,27 @@ if (!$complaint_id) {
 
 $user = current_user($pdo);
 
-// Ambil detail pengaduan, PASTIKAN HANYA MILIK USER YANG LOGIN
+// Ambil detail pengaduan
 $stmt = $pdo->prepare("SELECT * FROM complaints WHERE id = ? AND user_id = ?");
 $stmt->execute([$complaint_id, $user['id']]);
 $complaint = $stmt->fetch(PDO::FETCH_ASSOC);
 
-// Jika pengaduan tidak ditemukan atau bukan milik user, redirect ke dashboard
 if (!$complaint) {
     header("Location: dashboard.php");
     exit;
 }
 
-// Handle form balasan dari siswa
+// Handle form balasan
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty(trim($_POST['response']))) {
     $response_text = trim($_POST['response']);
-    
     $stmt = $pdo->prepare("INSERT INTO complaint_responses (complaint_id, user_id, response) VALUES (?, ?, ?)");
     $stmt->execute([$complaint_id, $user['id'], $response_text]);
-    
-    header("Location: view_complaint.php?id=" . $complaint_id);
+    header("Location: view_complaint.php?id=" . $complaint_id . "#chat-end");
     exit;
 }
 
-// Ambil semua tanggapan untuk pengaduan ini, join dengan tabel user untuk dapat role
-// PERBAIKAN DI SINI: Menggunakan r.user_id bukan r.admin_id
-$stmt = $pdo->prepare("SELECT r.*, u.full_name, u.role
-                       FROM complaint_responses r
-                       JOIN users u ON r.user_id = u.id
-                       WHERE r.complaint_id = ?
-                       ORDER BY r.created_at ASC");
+// Ambil semua tanggapan
+$stmt = $pdo->prepare("SELECT r.*, u.full_name, u.role FROM complaint_responses r JOIN users u ON r.user_id = u.id WHERE r.complaint_id = ? ORDER BY r.created_at ASC");
 $stmt->execute([$complaint_id]);
 $responses = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -52,76 +44,83 @@ $responses = $stmt->fetchAll(PDO::FETCH_ASSOC);
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Detail Pengaduan #<?= $complaint['id'] ?></title>
-  <link rel="stylesheet" href="static/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    body { background: #f5f7fa; }
-    .container { max-width: 800px; margin: 30px auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-    h1 { font-size: 1.5rem; border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 20px; }
-    .complaint-details p { margin: 0 0 12px; line-height: 1.6; color: #333; }
-    .complaint-details strong { display: inline-block; width: 120px; color: #555; }
-    .description-box { background: #f8f9fa; border: 1px solid #e9ecef; padding: 15px; border-radius: 8px; white-space: pre-wrap; margin-top: 10px; }
-    .response-section { margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; }
-    .response-item { border-radius: 12px; padding: 12px 18px; margin-bottom: 12px; max-width: 80%; }
-    .response-item p { margin: 0; }
-    .response-item .meta { font-size: 0.8em; color: #6c757d; margin-bottom: 5px; font-weight: 600; }
-    /* Styling untuk membedakan balasan admin dan siswa */
-    .admin-response { background: #e7f5ff; border: 1px solid #b3d7f0; align-self: flex-start; }
-    .student-response { background: #f0f0f0; border: 1px solid #ddd; align-self: flex-end; }
-    .responses-container { display: flex; flex-direction: column; }
-    .back-link { display: inline-block; margin-bottom: 20px; color: var(--primary); text-decoration: none; }
-    .status { padding: 5px 10px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; color: white; }
+    :root { --primary: #4361ee; --light: #f8f9fa; --dark: #212529; --success: #4cc9f0; --warning: #f9c74f; }
+    body { background-color: #f5f7fa; font-family: 'Segoe UI', sans-serif; margin: 0; }
+    .chat-container { max-width: 800px; margin: 30px auto; background: white; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); display: flex; flex-direction: column; height: calc(100vh - 60px); }
+    .chat-header { padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+    .chat-header h1 { font-size: 1.2rem; margin: 0; }
+    .status { padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; color: white; }
     .status.pending { background-color: var(--warning); }
     .status.process { background-color: var(--primary); }
-    .status.resolved { background-color: var(--success); }
-    .response-form textarea { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 10px; }
-    .btn-primary { background: #007bff; color: white; padding: 10px 15px; border-radius: 5px; text-decoration: none; display: inline-block; border: none; cursor: pointer; }
+    .status.resolved { background-color: var(--success); color: var(--dark); }
+    .chat-body { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
+    .message { display: flex; flex-direction: column; max-width: 75%; }
+    .message .bubble { padding: 12px 18px; border-radius: 20px; line-height: 1.5; }
+    .message .meta { font-size: 0.75rem; color: #6c757d; padding: 0 10px; margin-top: 4px; }
+    .initial-complaint { background: #fafafa; border: 1px solid #eee; padding: 15px; border-radius: 12px; margin-bottom: 10px; }
+    .initial-complaint p { margin: 0; }
+    /* Student messages */
+    .message.student { align-self: flex-end; align-items: flex-end; }
+    .message.student .bubble { background-color: var(--primary); color: white; border-bottom-right-radius: 5px; }
+    /* Admin messages */
+    .message.admin { align-self: flex-start; align-items: flex-start; }
+    .message.admin .bubble { background-color: #e9ecef; color: var(--dark); border-bottom-left-radius: 5px; }
+    .chat-footer { padding: 20px; border-top: 1px solid #eee; background: #f8f9fa; }
+    .chat-footer form { display: flex; gap: 10px; }
+    .chat-footer textarea { flex: 1; padding: 12px 15px; border: 1px solid #ddd; border-radius: 25px; resize: none; }
+    .chat-footer button { padding: 0 20px; border-radius: 25px; border: none; background: var(--primary); color: white; cursor: pointer; font-size: 1.2rem; }
+    .back-link { color: var(--primary); text-decoration: none; font-size: 0.9rem; }
   </style>
 </head>
 <body>
-<div class="container">
-    <a href="dashboard.php" class="back-link">&laquo; Kembali ke Dashboard</a>
-    <h1>Detail Pengaduan Anda</h1>
-
-    <div class="complaint-details">
-        <p><strong>Judul:</strong> <?= htmlspecialchars($complaint['title']) ?></p>
-        <p><strong>Status:</strong> <span class="status <?= htmlspecialchars($complaint['status']) ?>"><?= ucfirst($complaint['status']) ?></span></p>
-        <p><strong>Deskripsi Awal:</strong></p>
-        <div class="description-box"><?= htmlspecialchars($complaint['description']) ?></div>
-    </div>
-
-    <div class="response-section">
-        <h2>Percakapan</h2>
-        <div class="responses-container">
-            <?php if (empty($responses)): ?>
-                <p>Belum ada tanggapan.</p>
-            <?php else: ?>
-                <?php foreach ($responses as $response): ?>
-                    <?php 
-                        $is_admin = ($response['role'] === 'admin');
-                        $response_class = $is_admin ? 'admin-response' : 'student-response';
-                        $align_class = $is_admin ? 'align-left' : 'align-right';
-                        $author_name = $is_admin ? htmlspecialchars($response['full_name']) . ' (Admin)' : 'Anda';
-                    ?>
-                    <div class="response-item <?= $response_class ?>">
-                        <div class="meta">
-                            <span><?= $author_name ?></span>
-                            <span style="float:right; font-weight:normal;"><?= date('d M Y, H:i', strtotime($response['created_at'])) ?></span>
-                        </div>
-                        <p><?= nl2br(htmlspecialchars($response['response'])) ?></p>
-                    </div>
-                <?php endforeach; ?>
-            <?php endif; ?>
+<div class="chat-container">
+    <header class="chat-header">
+        <div>
+            <a href="dashboard.php" class="back-link"><i class="fas fa-arrow-left"></i> Kembali</a>
+            <h1><?= htmlspecialchars($complaint['title']) ?></h1>
         </div>
-        
-        <div class="response-form" style="margin-top: 20px;">
-            <hr>
-            <h3 style="margin-top:20px;">Kirim Balasan</h3>
-            <form method="post">
-                <textarea name="response" rows="4" placeholder="Tulis balasan Anda di sini..." required></textarea>
-                <button type="submit" class="btn-primary">Kirim</button>
-            </form>
+        <span class="status <?= htmlspecialchars($complaint['status']) ?>"><?= ucfirst($complaint['status']) ?></span>
+    </header>
+
+    <main class="chat-body">
+        <div class="initial-complaint">
+            <strong>Deskripsi Awal Anda:</strong>
+            <p><?= nl2br(htmlspecialchars($complaint['description'])) ?></p>
         </div>
-    </div>
+
+        <?php foreach ($responses as $response): ?>
+            <?php 
+                $is_admin = ($response['role'] === 'admin');
+                $message_class = $is_admin ? 'admin' : 'student';
+                $author_name = $is_admin ? htmlspecialchars($response['full_name']) : 'Anda';
+            ?>
+            <div class="message <?= $message_class ?>">
+                <div class="bubble">
+                    <?= nl2br(htmlspecialchars($response['response'])) ?>
+                </div>
+                <div class="meta">
+                    <?= $author_name ?> &bull; <?= date('H:i', strtotime($response['created_at'])) ?>
+                </div>
+            </div>
+        <?php endforeach; ?>
+        <div id="chat-end"></div>
+    </main>
+    
+    <?php if ($complaint['status'] !== 'resolved'): ?>
+    <footer class="chat-footer">
+        <form method="post">
+            <textarea name="response" rows="1" placeholder="Ketik balasan..." required></textarea>
+            <button type="submit"><i class="fas fa-paper-plane"></i></button>
+        </form>
+    </footer>
+    <?php endif; ?>
 </div>
+<script>
+    // Auto scroll to the bottom of the chat
+    const chatBody = document.querySelector('.chat-body');
+    chatBody.scrollTop = chatBody.scrollHeight;
+</script>
 </body>
 </html>
