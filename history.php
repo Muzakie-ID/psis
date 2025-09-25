@@ -7,7 +7,7 @@ if (!is_logged_in()) {
 $user = current_user($pdo);
 
 // --- LOGIKA FILTER BARU ---
-$filter_status = $_GET['status'] ?? 'all'; // Ambil status dari URL, defaultnya 'all'
+$filter_status = $_GET['status'] ?? 'all'; 
 
 $sql = "SELECT id, title, description, status, DATE_FORMAT(created_at, '%d %M %Y') as created_at FROM complaints WHERE user_id = :user_id";
 $params = ['user_id' => $user['id']];
@@ -24,6 +24,7 @@ $stmt->execute($params);
 $complaints = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $cssPath = file_exists(__DIR__ . '/static/css/style.css') ? 'static/css/style.css' : 'style.css';
+$jsPath = file_exists(__DIR__ . '/static/js/script.js') ? 'static/js/script.js' : 'script.js';
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -34,7 +35,6 @@ $cssPath = file_exists(__DIR__ . '/static/css/style.css') ? 'static/css/style.cs
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="<?= htmlspecialchars($cssPath) ?>">
     <style>
-        /* Gaya tambahan untuk form filter */
         .filter-form {
             margin-bottom: 20px;
             display: flex;
@@ -71,7 +71,7 @@ $cssPath = file_exists(__DIR__ . '/static/css/style.css') ? 'static/css/style.cs
                 </a>
             </li>
             <li class="menu-item">
-                <a href="dashboard.php#complaint" onclick="window.location.href='dashboard.php'; setTimeout(() => document.querySelector('[data-page=complaint]').click(), 100);" style="display:flex; align-items:center; gap:12px; text-decoration:none; color:inherit; width:100%; cursor: pointer;">
+                <a href="dashboard.php#complaint" style="display:flex; align-items:center; gap:12px; text-decoration:none; color:inherit; width:100%;">
                     <i class="fas fa-plus-circle"></i><span class="menu-text">Buat Pengaduan</span>
                 </a>
             </li>
@@ -81,14 +81,12 @@ $cssPath = file_exists(__DIR__ . '/static/css/style.css') ? 'static/css/style.cs
                 </a>
             </li>
             <li class="menu-item">
-                <a href="dashboard.php#profile" onclick="window.location.href='dashboard.php'; setTimeout(() => document.querySelector('[data-page=profile]').click(), 100);" style="display:flex; align-items:center; gap:12px; text-decoration:none; color:inherit; width:100%; cursor: pointer;">
+                <a href="dashboard.php#profile" style="display:flex; align-items:center; gap:12px; text-decoration:none; color:inherit; width:100%;">
                     <i class="fas fa-user"></i><span class="menu-text">Profil</span>
                 </a>
             </li>
-           <li class="menu-item">
-                 <a href="logout.php" onclick="return confirm('Apakah Anda yakin ingin keluar?');" style="display:flex; align-items:center; gap:12px; text-decoration:none; color:inherit; width:100%;">
-                    <i class="fas fa-sign-out-alt"></i><span class="menu-text">Keluar</span>
-                </a>
+            <li class="menu-item" id="logout-btn">
+                <i class="fas fa-sign-out-alt"></i><span class="menu-text">Keluar</span>
             </li>
         </ul>
     </div>
@@ -143,5 +141,18 @@ $cssPath = file_exists(__DIR__ . '/static/css/style.css') ? 'static/css/style.cs
             </div>
         </div>
     </div>
+
+    <div class="logout-modal" id="logout-modal">
+        <div class="logout-modal-content">
+             <div class="logout-modal-header"><i class="fas fa-sign-out-alt"></i><h2>Konfirmasi Keluar</h2></div>
+             <p>Apakah Anda yakin ingin keluar, <span id="logout-user-name"><?= htmlspecialchars($user['full_name'] ?: $user['username']) ?></span>?</p>
+             <div class="logout-modal-buttons">
+                <button class="btn btn-secondary" id="logout-cancel-btn">Batal</button>
+                <a href="logout.php" class="btn btn-danger">Keluar</a>
+             </div>
+        </div>
+    </div>
+    
+    <script src="<?= htmlspecialchars($jsPath) ?>"></script>
 </body>
 </html>
