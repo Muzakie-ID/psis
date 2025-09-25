@@ -1,5 +1,6 @@
 <?php
 require_once '../config.php';
+// Autentikasi dan otorisasi admin
 if (!is_logged_in() || $_SESSION['user_role'] !== 'admin') {
     header("Location: ../index.php");
     exit;
@@ -7,7 +8,7 @@ if (!is_logged_in() || $_SESSION['user_role'] !== 'admin') {
 
 $user = current_user($pdo);
 
-// update status laporan
+// Logika untuk aksi (delete, process, resolved)
 if (isset($_GET['action'], $_GET['id'])) {
     $id = (int)$_GET['id'];
     if ($_GET['action'] === 'delete') {
@@ -24,7 +25,18 @@ if (isset($_GET['action'], $_GET['id'])) {
     exit;
 }
 
-// ambil semua laporan
+// Query untuk data kartu statistik
+$stmt_counts = $pdo->query("SELECT status, COUNT(*) as total FROM complaints GROUP BY status");
+$counts_data = $stmt_counts->fetchAll(PDO::FETCH_KEY_PAIR);
+
+$counts = [
+    'pending' => $counts_data['pending'] ?? 0,
+    'process' => $counts_data['process'] ?? 0,
+    'resolved' => $counts_data['resolved'] ?? 0,
+];
+$total_complaints = array_sum($counts);
+
+// Query untuk mengambil semua data pengaduan untuk tabel
 $stmt = $pdo->query("SELECT c.*, u.full_name, u.username, u.kelas 
                      FROM complaints c 
                      JOIN users u ON c.user_id = u.id 
@@ -35,76 +47,190 @@ $complaints = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <html lang="id">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard - Pengaduan Siswa</title>
-  <link rel="stylesheet" href="../static/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    body{padding:20px;background:#f8f9fa;font-family:sans-serif}
-    h1{margin-bottom:20px}
-    table{width:100%;border-collapse:collapse;background:white}
-    th,td{border:1px solid #ddd;padding:8px;text-align:left}
-    th{background:#f1f1f1}
-    .status-pending{color:#b36b00;font-weight:600}
-    .status-process{color:#0057b3;font-weight:600}
-    .status-resolved{color:#2a8a2a;font-weight:600}
-    a.btn{padding:5px 10px;border-radius:5px;text-decoration:none;margin-right:5px;font-size:0.9em; display: inline-block; margin-bottom: 5px;}
-    .btn-detail{background:#6c757d; color:white;}
-    .btn-process{background:#007bff;color:white}
-    .btn-resolved{background:#28a745;color:white}
-    .btn-delete{background:#dc3545;color:white}
-    .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
-    .topbar a{color:#007bff;text-decoration:none;font-size:0.9em}
+    :root {
+        --primary: #4361ee;
+        --secondary: #3a0ca3;
+        --light: #f8f9fa;
+        --dark: #212529;
+        --success: #4cc9f0;
+        --warning: #f9c74f;
+        --danger: #f94144;
+    }
+    body { 
+        background: #f5f7fa; 
+        font-family: 'Segoe UI', sans-serif; 
+        margin: 0;
+    }
+    .main-content {
+        padding: 30px;
+    }
+    .header {
+        background: white;
+        padding: 0 30px;
+        height: 70px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+    .header h1 {
+        font-size: 1.5rem;
+        margin: 0;
+        color: var(--dark);
+    }
+    .user-menu a {
+        color: var(--primary);
+        text-decoration: none;
+        margin-left: 15px;
+    }
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    .card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    .card .icon {
+        font-size: 2rem;
+        padding: 15px;
+        border-radius: 50%;
+        color: white;
+    }
+    .card.total .icon { background: var(--primary); }
+    .card.pending .icon { background: var(--warning); }
+    .card.resolved .icon { background: var(--success); }
+    .card-title { font-size: 1rem; color: #6c757d; }
+    .card-value { font-size: 1.8rem; font-weight: 700; color: var(--dark); }
+
+    .table-container {
+        background: white;
+        border-radius: 10px;
+        padding: 25px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    }
+    .table-container h2 { margin-top: 0; }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    th, td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #dee2e6;
+    }
+    th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+    }
+    tr:hover {
+        background-color: #f1f3f5;
+    }
+    .status { font-weight: 600; }
+    .status-pending { color: #fd7e14; }
+    .status-process { color: var(--primary); }
+    .status-resolved { color: #20c997; }
+
+    a.btn {
+        padding: 6px 12px;
+        border-radius: 6px;
+        text-decoration: none;
+        margin-right: 5px;
+        font-size: 0.9em;
+        display: inline-block;
+        border: none;
+        color: white;
+        cursor: pointer;
+    }
+    .btn-detail { background: #6c757d; }
+    .btn-process { background: var(--primary); }
+    .btn-resolved { background: #28a745; }
+    .btn-delete { background: var(--danger); }
   </style>
 </head>
 <body>
-  <div class="topbar">
+
+  <header class="header">
     <h1>Admin Dashboard</h1>
-    <div>
-      <span>Halo, <?= htmlspecialchars($user['full_name'] ?: "Admin") ?> (Admin)</span> | 
-      <a href="../dashboard.php">User Dashboard</a> | 
+    <div class="user-menu">
+      <span>Halo, <strong><?= htmlspecialchars($user['full_name'] ?: "Admin") ?></strong></span>
+      <a href="../dashboard.php">Lihat Dasbor Siswa</a>
       <a href="../logout.php">Logout</a>
     </div>
-  </div>
+  </header>
 
-  <table>
-    <tr>
-      <th>ID</th>
-      <th>Judul</th>
-      <th>Kategori</th>
-      <th>Siswa</th>
-      <th>Lampiran</th>
-      <th>Status</th>
-      <th>Tanggal</th>
-      <th>Aksi</th>
-    </tr>
-    <?php foreach($complaints as $c): ?>
-    <tr>
-      <td><?= $c['id'] ?></td>
-      <td><?= htmlspecialchars($c['title']) ?></td>
-      <td><?= htmlspecialchars($c['category']) ?></td>
-      <td><?= htmlspecialchars($c['full_name'] ?: $c['username']) ?> (<?= htmlspecialchars($c['kelas']) ?>)</td>
-      <td>
-        <?php if($c['attachment']): ?>
-          <a href="../<?= htmlspecialchars($c['attachment']) ?>" target="_blank">Lihat</a>
-        <?php else: ?>
-          -
-        <?php endif; ?>
-      </td>
-      <td class="status-<?= htmlspecialchars($c['status']) ?>">
-        <?= ucfirst($c['status']) ?>
-      </td>
-      <td><?= date('d M Y', strtotime($c['created_at'])) ?></td>
-      <td>
-        <a class="btn btn-detail" href="view_complaint.php?id=<?= $c['id'] ?>">Detail/Balas</a>
-        <?php if($c['status'] === 'pending'): ?>
-          <a class="btn btn-process" href="?action=process&id=<?= $c['id'] ?>">Proses</a>
-        <?php endif; ?>
-        <?php if($c['status'] !== 'resolved'): ?>
-          <a class="btn btn-resolved" href="?action=resolved&id=<?= $c['id'] ?>">Selesai</a>
-        <?php endif; ?>
-        <a class="btn btn-delete" href="?action=delete&id=<?= $c['id'] ?>" onclick="return confirm('Yakin hapus laporan ini?')">Hapus</a>
-      </td>
-    </tr>
-    <?php endforeach; ?>
-  </table>
+  <main class="main-content">
+    <div class="dashboard-grid">
+        <div class="card total">
+            <div class="icon"><i class="fas fa-inbox"></i></div>
+            <div>
+                <div class="card-title">Total Pengaduan</div>
+                <div class="card-value"><?= $total_complaints ?></div>
+            </div>
+        </div>
+        <div class="card pending">
+            <div class="icon"><i class="fas fa-clock"></i></div>
+            <div>
+                <div class="card-title">Perlu Diproses</div>
+                <div class="card-value"><?= $counts['pending'] + $counts['process'] ?></div>
+            </div>
+        </div>
+        <div class="card resolved">
+            <div class="icon"><i class="fas fa-check-circle"></i></div>
+            <div>
+                <div class="card-title">Selesai</div>
+                <div class="card-value"><?= $counts['resolved'] ?></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-container">
+      <h2>Daftar Semua Pengaduan</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Judul</th>
+            <th>Siswa</th>
+            <th>Kategori</th>
+            <th>Status</th>
+            <th>Tanggal</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php foreach($complaints as $c): ?>
+          <tr>
+            <td><?= $c['id'] ?></td>
+            <td><?= htmlspecialchars($c['title']) ?></td>
+            <td><?= htmlspecialchars($c['full_name'] ?: $c['username']) ?> (<?= htmlspecialchars($c['kelas']) ?>)</td>
+            <td><?= htmlspecialchars($c['category']) ?></td>
+            <td><span class="status status-<?= htmlspecialchars($c['status']) ?>"><?= ucfirst($c['status']) ?></span></td>
+            <td><?= date('d M Y', strtotime($c['created_at'])) ?></td>
+            <td>
+              <a class="btn btn-detail" href="view_complaint.php?id=<?= $c['id'] ?>">Detail</a>
+              <?php if($c['status'] !== 'resolved'): ?>
+                <a class="btn btn-resolved" href="?action=resolved&id=<?= $c['id'] ?>">Selesai</a>
+              <?php endif; ?>
+              <a class="btn btn-delete" href="?action=delete&id=<?= $c['id'] ?>" onclick="return confirm('Yakin hapus laporan ini?')">Hapus</a>
+            </td>
+          </tr>
+          <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+  </main>
+  
 </body>
 </html>
