@@ -1,11 +1,11 @@
 <?php
 require_once '../config.php';
-if (!is_logged_in()) {
-    header("Location: index.php");
+if (!is_logged_in() || $_SESSION['user_role'] !== 'admin') {
+    header("Location: ../index.php");
     exit;
 }
 
-$user = "Admin";
+$user = current_user($pdo);
 
 // update status laporan
 if (isset($_GET['action'], $_GET['id'])) {
@@ -36,7 +36,7 @@ $complaints = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <head>
   <meta charset="utf-8">
   <title>Admin Dashboard - Pengaduan Siswa</title>
-  <link rel="stylesheet" href="static/css/style.css">
+  <link rel="stylesheet" href="../static/css/style.css">
   <style>
     body{padding:20px;background:#f8f9fa;font-family:sans-serif}
     h1{margin-bottom:20px}
@@ -46,7 +46,8 @@ $complaints = $stmt->fetchAll(PDO::FETCH_ASSOC);
     .status-pending{color:#b36b00;font-weight:600}
     .status-process{color:#0057b3;font-weight:600}
     .status-resolved{color:#2a8a2a;font-weight:600}
-    a.btn{padding:5px 10px;border-radius:5px;text-decoration:none;margin-right:5px;font-size:0.9em}
+    a.btn{padding:5px 10px;border-radius:5px;text-decoration:none;margin-right:5px;font-size:0.9em; display: inline-block; margin-bottom: 5px;}
+    .btn-detail{background:#6c757d; color:white;}
     .btn-process{background:#007bff;color:white}
     .btn-resolved{background:#28a745;color:white}
     .btn-delete{background:#dc3545;color:white}
@@ -58,7 +59,7 @@ $complaints = $stmt->fetchAll(PDO::FETCH_ASSOC);
   <div class="topbar">
     <h1>Admin Dashboard</h1>
     <div>
-      <span>Halo, <?= htmlspecialchars($user="Admin" ?: $user['username']) ?> (Admin)</span> | 
+      <span>Halo, <?= htmlspecialchars($user['full_name'] ?: "Admin") ?> (Admin)</span> | 
       <a href="../dashboard.php">User Dashboard</a> | 
       <a href="../logout.php">Logout</a>
     </div>
@@ -69,10 +70,9 @@ $complaints = $stmt->fetchAll(PDO::FETCH_ASSOC);
       <th>ID</th>
       <th>Judul</th>
       <th>Kategori</th>
-      <th>Deskripsi</th>
+      <th>Siswa</th>
       <th>Lampiran</th>
       <th>Status</th>
-      <th>Siswa</th>
       <th>Tanggal</th>
       <th>Aksi</th>
     </tr>
@@ -81,10 +81,10 @@ $complaints = $stmt->fetchAll(PDO::FETCH_ASSOC);
       <td><?= $c['id'] ?></td>
       <td><?= htmlspecialchars($c['title']) ?></td>
       <td><?= htmlspecialchars($c['category']) ?></td>
-      <td><?= nl2br(htmlspecialchars($c['description'])) ?></td>
+      <td><?= htmlspecialchars($c['full_name'] ?: $c['username']) ?> (<?= htmlspecialchars($c['kelas']) ?>)</td>
       <td>
         <?php if($c['attachment']): ?>
-          <a href="<?= htmlspecialchars($c['attachment']) ?>" target="_blank">Lihat</a>
+          <a href="../<?= htmlspecialchars($c['attachment']) ?>" target="_blank">Lihat</a>
         <?php else: ?>
           -
         <?php endif; ?>
@@ -92,9 +92,9 @@ $complaints = $stmt->fetchAll(PDO::FETCH_ASSOC);
       <td class="status-<?= htmlspecialchars($c['status']) ?>">
         <?= ucfirst($c['status']) ?>
       </td>
-      <td><?= htmlspecialchars($c['full_name'] ?: $c['username']) ?> (<?= htmlspecialchars($c['kelas']) ?>)</td>
-      <td><?= $c['created_at'] ?></td>
+      <td><?= date('d M Y', strtotime($c['created_at'])) ?></td>
       <td>
+        <a class="btn btn-detail" href="view_complaint.php?id=<?= $c['id'] ?>">Detail/Balas</a>
         <?php if($c['status'] === 'pending'): ?>
           <a class="btn btn-process" href="?action=process&id=<?= $c['id'] ?>">Proses</a>
         <?php endif; ?>
