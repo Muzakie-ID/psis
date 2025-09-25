@@ -3,10 +3,10 @@
 session_start();
 
 // ubah sesuai konfigurasi MySQL-mu
-define('DB_HOST', '127.0.0.1');
+define('DB_HOST', 'db');
 define('DB_NAME', 'sis');
 define('DB_USER', 'root');
-define('DB_PASS', ''); // isi password mysql jika ada
+define('DB_PASS', 'root'); // isi password mysql jika ada
 
 // folder upload
 define('UPLOAD_DIR', __DIR__ . '/uploads/');
