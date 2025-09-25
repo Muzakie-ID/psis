@@ -18,6 +18,7 @@ $stmt = $pdo->prepare("SELECT * FROM complaints WHERE id = ? AND user_id = ?");
 $stmt->execute([$complaint_id, $user['id']]);
 $complaint = $stmt->fetch(PDO::FETCH_ASSOC);
 
+// Jika pengaduan tidak ditemukan atau bukan milik user, redirect ke dashboard
 if (!$complaint) {
     header("Location: dashboard.php");
     exit;
@@ -35,6 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty(trim($_POST['response']))) {
 }
 
 // Ambil semua tanggapan untuk pengaduan ini, join dengan tabel user untuk dapat role
+// PERBAIKAN DI SINI: Menggunakan r.user_id bukan r.admin_id
 $stmt = $pdo->prepare("SELECT r.*, u.full_name, u.role
                        FROM complaint_responses r
                        JOIN users u ON r.user_id = u.id
