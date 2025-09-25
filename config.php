@@ -1,7 +1,9 @@
 <?php
-
-date_default_timezone_set('Asia/Jakarta');
 // config.php
+
+// ATUR ZONA WAKTU PHP KE ASIA/JAKARTA (WIB)
+date_default_timezone_set('Asia/Jakarta');
+
 session_start();
 
 // ubah sesuai konfigurasi MySQL-mu
@@ -20,6 +22,10 @@ try {
         DB_PASS,
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
     );
+
+    // BARIS BARU: ATUR ZONA WAKTU UNTUK KONEKSI DATABASE INI
+    $pdo->exec("SET time_zone = '+07:00'");
+
 } catch (Exception $e) {
     die("Koneksi DB gagal: " . $e->getMessage());
 }
