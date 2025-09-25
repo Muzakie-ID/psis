@@ -287,10 +287,20 @@ document.addEventListener('DOMContentLoaded', function() {
                         return;
                     }
                     data.forEach(c => {
-                        const div = document.createElement('div');
-                        div.className = 'complaint-item';
-                        div.innerHTML = '<div class="complaint-info"><h3>' + (c.title||'') + '</h3><p>Diajukan pada: ' + (c.created_at||'') + '</p></div><div class="status ' + (c.status||'') + '">' + (c.status||'') + '</div>';
-                        list.appendChild(div);
+                        // BUAT ANCHOR TAG (LINK) UNTUK SETIAP ITEM
+                        const a = document.createElement('a');
+                        a.href = 'view_complaint.php?id=' + c.id;
+                        a.className = 'complaint-item-link';
+
+                        // BUAT KONTEN DI DALAM LINK
+                        a.innerHTML = `<div class="complaint-item">
+                                        <div class="complaint-info">
+                                            <h3>${c.title || ''}</h3>
+                                            <p>Diajukan pada: ${c.created_at || ''}</p>
+                                        </div>
+                                        <div class="status status-${c.status || ''}">${c.status || ''}</div>
+                                       </div>`;
+                        list.appendChild(a);
                     });
                 } catch(e) {
                     console.warn('Error render complaints', e);
@@ -299,7 +309,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     </script>
-
     <script src="<?= htmlspecialchars($jsPath) ?>"></script>
 </body>
 </html>
