@@ -23,11 +23,7 @@ $cssPath = file_exists(__DIR__ . '/static/css/style.css') ? 'static/css/style.cs
     <link rel="stylesheet" href="<?= htmlspecialchars($cssPath) ?>">
 </head>
 <body>
-    <div class="sidebar" id="sidebar">
-        <div class="logo">
-            <i class="fas fa-shield-alt"></i>
-            <span class="logo-text">Sistem Pengaduan</span>
-        </div>
+
 <div class="sidebar" id="sidebar">
         <div class="logo">
             <i class="fas fa-shield-alt"></i>
