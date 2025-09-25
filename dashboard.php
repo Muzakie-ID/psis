@@ -168,6 +168,7 @@ $jsPath = file_exists(__DIR__ . '/static/js/script.js') ? 'static/js/script.js' 
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // --- SCRIPT UNTUK MEMUAT PENGADUAN TERBARU ---
         if (typeof fetch === 'function') {
             fetch('get_complaints.php')
             .then(r => r.json())
@@ -199,36 +200,47 @@ $jsPath = file_exists(__DIR__ . '/static/js/script.js') ? 'static/js/script.js' 
             }).catch(()=>{});
         }
         
-        // Logika untuk menampilkan tab/page yang benar berdasarkan hash di URL
+        // --- SCRIPT UNTUK NAVIGASI TAB/PAGE ---
+        const pageTitle = document.getElementById('page-title');
+
         function showPageFromHash() {
             const hash = window.location.hash.substring(1);
             const targetPage = hash || 'dashboard';
             const pageElement = document.getElementById(targetPage + '-page');
 
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+            document.querySelectorAll('.menu-item[data-page]').forEach(m => m.classList.remove('active'));
 
             if (pageElement) {
                 pageElement.classList.add('active');
                 const menuItem = document.querySelector(`.menu-item[data-page="${targetPage}"]`);
                 if (menuItem) {
                     menuItem.classList.add('active');
+                    const menuText = menuItem.querySelector('.menu-text');
+                    if (pageTitle && menuText) {
+                        pageTitle.textContent = menuText.textContent;
+                    }
                 }
             } else {
+                // Fallback jika hash tidak valid
                 document.getElementById('dashboard-page').classList.add('active');
                 document.querySelector('.menu-item[data-page="dashboard"]').classList.add('active');
+                if (pageTitle) {
+                    pageTitle.textContent = 'Dashboard';
+                }
             }
         }
 
         // Jalankan saat halaman pertama kali dimuat
         showPageFromHash();
 
-        // Tambahkan event listener untuk menu item
+        // Tambahkan event listener untuk setiap menu item yang memiliki data-page
         document.querySelectorAll('.menu-item[data-page]').forEach(item => {
-            item.addEventListener('click', () => {
+            item.addEventListener('click', (event) => {
+                event.preventDefault(); // Mencegah aksi default
                 const pageId = item.getAttribute('data-page');
-                window.location.hash = pageId;
-                showPageFromHash();
+                window.location.hash = pageId; // Set hash di URL
+                showPageFromHash(); // Langsung panggil fungsi untuk menampilkan page
             });
         });
     });
