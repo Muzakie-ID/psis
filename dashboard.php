@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <span class="logo-text">Sistem Pengaduan</span>
         </div>
         
-        <ul class="sidebar-menu">
+            <ul class="sidebar-menu">
             <li class="menu-item active" data-page="dashboard">
                 <i class="fas fa-home"></i>
                 <span class="menu-text">Dashboard</span>
@@ -81,6 +81,12 @@ document.addEventListener('DOMContentLoaded', function() {
             <li class="menu-item" data-page="complaint">
                 <i class="fas fa-plus-circle"></i>
                 <span class="menu-text">Buat Pengaduan</span>
+            </li>
+            <li class="menu-item">
+                <a href="history.php" style="display:flex; align-items:center; gap:12px; text-decoration:none; color:inherit;">
+                    <i class="fas fa-history"></i>
+                    <span class="menu-text">Riwayat</span>
+                </a>
             </li>
             <li class="menu-item" data-page="profile">
                 <i class="fas fa-user"></i>
