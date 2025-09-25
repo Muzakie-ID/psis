@@ -7,22 +7,20 @@ if (!is_logged_in()) {
 $user = current_user($pdo);
 
 
-// Koneksi database
-$koneksi = new mysqli("localhost", "root", "", "SIS");
-
-// Query hitung status
-$sql = "SELECT status, COUNT(*) as total FROM complaints GROUP BY status";
-$result = $koneksi->query($sql);
+// Query hitung status PENGGUNA SAAT INI
+$stmt = $pdo->prepare("SELECT status, COUNT(*) as total FROM complaints WHERE user_id = ? GROUP BY status");
+$stmt->execute([$user['id']]);
+$results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Siapkan default
 $counts = [
     'pending' => 0,
     'process' => 0,
-    'resolved' => 0,
-    'waiting' => 0
+    'resolved' => 0
 ];
 
-while ($row = $result->fetch_assoc()) {
+// Isi dengan data dari DB
+foreach ($results as $row) {
     $counts[$row['status']] = $row['total'];
 }
 
@@ -69,7 +67,6 @@ document.addEventListener('DOMContentLoaded', function() {
     <link rel="stylesheet" href="<?= htmlspecialchars($cssPath) ?>">
 </head>
 <body>
-    <!-- Sidebar Navigation -->
     <div class="sidebar" id="sidebar">
         <div class="logo">
             <i class="fas fa-shield-alt"></i>
@@ -85,14 +82,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 <i class="fas fa-plus-circle"></i>
                 <span class="menu-text">Buat Pengaduan</span>
             </li>
-            <!--<li class="menu-item" data-page="physical-psychical">
-                <i class="fas fa-heartbeat"></i>
-                <span class="menu-text">Fisik/Psikis</span>
-            </li>
-            <li class="menu-item" data-page="history">
-                <i class="fas fa-history"></i>
-                <span class="menu-text">Riwayat</span>
-            </li>-->
             <li class="menu-item" data-page="profile">
                 <i class="fas fa-user"></i>
                 <span class="menu-text">Profil</span>
@@ -108,9 +97,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </ul>
     </div>
     
-    <!-- Main Content -->
     <div class="main-content">
-        <!-- Header -->
         <div class="header">
             <div class="page-title" id="page-title">Dashboard</div>
             <div class="user-menu">
@@ -122,9 +109,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         </div>
         
-        <!-- Content Area -->
         <div class="content">
-            <!-- Dashboard Page -->
             <div class="page active" id="dashboard-page">
                 <div class="dashboard-grid">
     <div class="card card-warning">
@@ -159,12 +144,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                     
                     <div class="complaint-list" id="complaint-list">
-                        <!-- will be loaded by JS -->
-                    </div>
+                        </div>
                 </div>
             </div>
             
-            <!-- Complaint Page -->
             <div class="page" id="complaint-page">
                 <div class="form-container">
                     <div class="form-header">
@@ -206,7 +189,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             </div>
 
-            <!-- Physical/Psychical Page (placeholder agar script.js tidak error) -->
             <div class="page" id="physical-psychical-page">
                 <div class="form-container">
                     <div class="form-header">
@@ -217,7 +199,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             </div>
 
-            <!-- History Page -->
             <div class="page" id="history-page">
                 <div class="form-container">
                     <div class="form-header">
@@ -228,7 +209,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             </div>
 
-            <!-- Profile Page -->
             <div class="page" id="profile-page">
                 <div class="form-container">
                     <div class="form-header">
@@ -244,7 +224,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             </div>
 
-            <!-- Settings Page -->
             <div class="page" id="settings-page">
                 <div class="form-container">
                     <div class="form-header">
@@ -258,7 +237,6 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
     </div>
 
-    <!-- Modal Konfirmasi Pengaduan -->
     <div class="confirmation-modal" id="confirmation-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -274,7 +252,6 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
     </div>
 
-    <!-- Modal Konfirmasi Logout -->
     <div class="logout-modal" id="logout-modal">
         <div class="logout-modal-content">
             <div class="logout-modal-header">
