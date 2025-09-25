@@ -79,9 +79,10 @@ $jsPath = file_exists(__DIR__ . '/static/js/script.js') ? 'static/js/script.js' 
                 <i class="fas fa-user"></i>
                 <span class="menu-text">Profil</span>
             </li>
-            <li class="menu-item" id="logout-btn">
-                <i class="fas fa-sign-out-alt"></i>
-                <span class="menu-text">Keluar</span>
+            <li class="menu-item">
+                 <a href="logout.php" onclick="return confirm('Apakah Anda yakin ingin keluar?');" style="display:flex; align-items:center; gap:12px; text-decoration:none; color:inherit; width:100%;">
+                    <i class="fas fa-sign-out-alt"></i><span class="menu-text">Keluar</span>
+                </a>
             </li>
         </ul>
     </div>
