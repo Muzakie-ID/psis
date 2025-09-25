@@ -35,7 +35,6 @@ $jsPath = file_exists(__DIR__ . '/static/js/script.js') ? 'static/js/script.js' 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="<?= htmlspecialchars($cssPath) ?>">
     <style>
-        /* Gaya untuk pesan notifikasi */
         .flash-message { 
             padding: 15px; 
             margin-bottom: 20px; 
@@ -80,11 +79,9 @@ $jsPath = file_exists(__DIR__ . '/static/js/script.js') ? 'static/js/script.js' 
                 <i class="fas fa-user"></i>
                 <span class="menu-text">Profil</span>
             </li>
-            <li class="menu-item">
-                <a href="logout.php" onclick="return confirm('Apakah Anda yakin ingin keluar?');" style="display:flex; align-items:center; gap:12px; text-decoration:none; color:inherit; width:100%;">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span class="menu-text">Keluar</span>
-                </a>
+            <li class="menu-item" id="logout-btn">
+                <i class="fas fa-sign-out-alt"></i>
+                <span class="menu-text">Keluar</span>
             </li>
         </ul>
     </div>
@@ -170,7 +167,6 @@ $jsPath = file_exists(__DIR__ . '/static/js/script.js') ? 'static/js/script.js' 
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // --- SCRIPT UNTUK MEMUAT PENGADUAN TERBARU ---
         if (typeof fetch === 'function') {
             fetch('get_complaints.php')
             .then(r => r.json())
@@ -202,7 +198,6 @@ $jsPath = file_exists(__DIR__ . '/static/js/script.js') ? 'static/js/script.js' 
             }).catch(()=>{});
         }
         
-        // --- SCRIPT UNTUK NAVIGASI TAB/PAGE ---
         const pageTitle = document.getElementById('page-title');
 
         function showPageFromHash() {
@@ -224,7 +219,6 @@ $jsPath = file_exists(__DIR__ . '/static/js/script.js') ? 'static/js/script.js' 
                     }
                 }
             } else {
-                // Fallback jika hash tidak valid
                 document.getElementById('dashboard-page').classList.add('active');
                 document.querySelector('.menu-item[data-page="dashboard"]').classList.add('active');
                 if (pageTitle) {
@@ -233,16 +227,14 @@ $jsPath = file_exists(__DIR__ . '/static/js/script.js') ? 'static/js/script.js' 
             }
         }
 
-        // Jalankan saat halaman pertama kali dimuat
         showPageFromHash();
 
-        // Tambahkan event listener untuk setiap menu item yang memiliki data-page
         document.querySelectorAll('.menu-item[data-page]').forEach(item => {
             item.addEventListener('click', (event) => {
-                event.preventDefault(); // Mencegah aksi default
+                event.preventDefault(); 
                 const pageId = item.getAttribute('data-page');
-                window.location.hash = pageId; // Set hash di URL
-                showPageFromHash(); // Langsung panggil fungsi untuk menampilkan page
+                window.location.hash = pageId; 
+                showPageFromHash();
             });
         });
     });
