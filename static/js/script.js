@@ -41,7 +41,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Tampilkan halaman yang dipilih
                 if (pages[pageId]) {
                     pages[pageId].classList.add('active');
-                    pageTitle.textContent = document.querySelector(`.menu-item[data-page="${pageId}"] .menu-text`).textContent;
+                    const activeMenuItem = document.querySelector(`.menu-item[data-page="${pageId}"] .menu-text`);
+                    if (activeMenuItem) {
+                        pageTitle.textContent = activeMenuItem.textContent;
+                    }
                 }
                 
                 // Perbarui menu aktif
