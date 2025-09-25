@@ -31,12 +31,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 ]
             };
             
-            // Fungsi untuk menampilkan halaman tertentu
-            function showPage(pageId) {
-                // Sembunyikan semua halaman
-                Object.values(pages).forEach(page => {
-                    page.classList.remove('active');
-                });
                 
                 // Tampilkan halaman yang dipilih
                 if (pages[pageId]) {
