@@ -6,9 +6,21 @@ if (!is_logged_in()) {
 }
 $user = current_user($pdo);
 
-// Ambil SEMUA pengaduan milik pengguna ini
-$stmt = $pdo->prepare("SELECT id, title, description, status, DATE_FORMAT(created_at, '%d %M %Y') as created_at FROM complaints WHERE user_id = ? ORDER BY created_at DESC");
-$stmt->execute([$user['id']]);
+// --- LOGIKA FILTER BARU ---
+$filter_status = $_GET['status'] ?? 'all'; // Ambil status dari URL, defaultnya 'all'
+
+$sql = "SELECT id, title, description, status, DATE_FORMAT(created_at, '%d %M %Y') as created_at FROM complaints WHERE user_id = :user_id";
+$params = ['user_id' => $user['id']];
+
+if ($filter_status !== 'all' && in_array($filter_status, ['pending', 'process', 'resolved'])) {
+    $sql .= " AND status = :status";
+    $params['status'] = $filter_status;
+}
+
+$sql .= " ORDER BY created_at DESC";
+
+$stmt = $pdo->prepare($sql);
+$stmt->execute($params);
 $complaints = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $cssPath = file_exists(__DIR__ . '/static/css/style.css') ? 'static/css/style.css' : 'style.css';
@@ -21,6 +33,30 @@ $cssPath = file_exists(__DIR__ . '/static/css/style.css') ? 'static/css/style.cs
     <title>Riwayat Pengaduan - Sistem Pengaduan Siswa</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="<?= htmlspecialchars($cssPath) ?>">
+    <style>
+        /* Gaya tambahan untuk form filter */
+        .filter-form {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .filter-form select {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            font-size: 1rem;
+        }
+        .filter-form button {
+            padding: 8px 20px;
+            border-radius: 8px;
+            border: none;
+            background-color: var(--primary);
+            color: white;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+    </style>
 </head>
 <body>
     <div class="sidebar" id="sidebar">
@@ -31,30 +67,26 @@ $cssPath = file_exists(__DIR__ . '/static/css/style.css') ? 'static/css/style.cs
         <ul class="sidebar-menu">
             <li class="menu-item">
                 <a href="dashboard.php" style="display:flex; align-items:center; gap:12px; text-decoration:none; color:inherit; width:100%;">
-                    <i class="fas fa-home"></i>
-                    <span class="menu-text">Dashboard</span>
+                    <i class="fas fa-home"></i><span class="menu-text">Dashboard</span>
                 </a>
             </li>
             <li class="menu-item">
                 <a href="dashboard.php#complaint" onclick="window.location.href='dashboard.php'; setTimeout(() => document.querySelector('[data-page=complaint]').click(), 100);" style="display:flex; align-items:center; gap:12px; text-decoration:none; color:inherit; width:100%; cursor: pointer;">
-                    <i class="fas fa-plus-circle"></i>
-                    <span class="menu-text">Buat Pengaduan</span>
+                    <i class="fas fa-plus-circle"></i><span class="menu-text">Buat Pengaduan</span>
                 </a>
             </li>
-            <li class="menu-item active"> <a href="history.php" style="display:flex; align-items:center; gap:12px; text-decoration:none; color:inherit; width:100%;">
-                    <i class="fas fa-history"></i>
-                    <span class="menu-text">Riwayat</span>
+            <li class="menu-item active">
+                <a href="history.php" style="display:flex; align-items:center; gap:12px; text-decoration:none; color:inherit; width:100%;">
+                    <i class="fas fa-history"></i><span class="menu-text">Riwayat</span>
                 </a>
             </li>
             <li class="menu-item">
                 <a href="dashboard.php#profile" onclick="window.location.href='dashboard.php'; setTimeout(() => document.querySelector('[data-page=profile]').click(), 100);" style="display:flex; align-items:center; gap:12px; text-decoration:none; color:inherit; width:100%; cursor: pointer;">
-                    <i class="fas fa-user"></i>
-                    <span class="menu-text">Profil</span>
+                    <i class="fas fa-user"></i><span class="menu-text">Profil</span>
                 </a>
             </li>
             <li class="menu-item" id="logout-btn">
-                <i class="fas fa-sign-out-alt"></i>
-                <span class="menu-text">Keluar</span>
+                <i class="fas fa-sign-out-alt"></i><span class="menu-text">Keluar</span>
             </li>
         </ul>
     </div>
@@ -75,12 +107,23 @@ $cssPath = file_exists(__DIR__ . '/static/css/style.css') ? 'static/css/style.cs
             <div class="form-container">
                 <div class="form-header">
                     <h2 class="form-title">Semua Pengaduan Anda</h2>
-                    <p class="form-description">Berikut adalah daftar lengkap semua pengaduan yang pernah Anda ajukan.</p>
+                    <p class="form-description">Filter untuk melihat pengaduan berdasarkan statusnya.</p>
                 </div>
                 
+                <form action="history.php" method="GET" class="filter-form">
+                    <label for="status">Filter Status:</label>
+                    <select name="status" id="status">
+                        <option value="all" <?= $filter_status == 'all' ? 'selected' : '' ?>>Semua</option>
+                        <option value="pending" <?= $filter_status == 'pending' ? 'selected' : '' ?>>Pending</option>
+                        <option value="process" <?= $filter_status == 'process' ? 'selected' : '' ?>>Diproses</option>
+                        <option value="resolved" <?= $filter_status == 'resolved' ? 'selected' : '' ?>>Selesai</option>
+                    </select>
+                    <button type="submit">Filter</button>
+                </form>
+
                 <div class="complaint-list">
                     <?php if (empty($complaints)): ?>
-                        <p style="color:#6c757d; text-align:center;">Anda belum pernah membuat pengaduan.</p>
+                        <p style="color:#6c757d; text-align:center;">Tidak ada pengaduan yang cocok dengan filter ini.</p>
                     <?php else: ?>
                         <?php foreach ($complaints as $c): ?>
                             <a href="view_complaint.php?id=<?= $c['id'] ?>" class="complaint-item-link">
