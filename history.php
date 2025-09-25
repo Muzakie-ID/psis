@@ -28,17 +28,34 @@ $cssPath = file_exists(__DIR__ . '/static/css/style.css') ? 'static/css/style.cs
             <i class="fas fa-shield-alt"></i>
             <span class="logo-text">Sistem Pengaduan</span>
         </div>
-<ul class="sidebar-menu">
-            <li class="menu-item">
-                <a href="dashboard.php" style="display:flex; align-items:center; gap:12px; text-decoration:none; color:inherit; width:100%; padding: 12px 20px;">
-                    <i class="fas fa-home"></i>
-                    <span class="menu-text">Dashboard</span>
-                </a>
+<div class="sidebar" id="sidebar">
+        <div class="logo">
+            <i class="fas fa-shield-alt"></i>
+            <span class="logo-text">Sistem Pengaduan</span>
+        </div>
+        
+            <ul class="sidebar-menu">
+            <li class="menu-item active" data-page="dashboard">
+                <i class="fas fa-home"></i>
+                <span class="menu-text">Dashboard</span>
             </li>
-            <li class="menu-item active"> <a href="history.php" style="display:flex; align-items:center; gap:12px; text-decoration:none; color:inherit; width:100%; padding: 12px 20px;">
+            <li class="menu-item" data-page="complaint">
+                <i class="fas fa-plus-circle"></i>
+                <span class="menu-text">Buat Pengaduan</span>
+            </li>
+            <li class="menu-item">
+                <a href="history.php" style="display:flex; align-items:center; gap:12px; text-decoration:none; color:inherit;">
                     <i class="fas fa-history"></i>
                     <span class="menu-text">Riwayat</span>
                 </a>
+            </li>
+            <li class="menu-item" data-page="profile">
+                <i class="fas fa-user"></i>
+                <span class="menu-text">Profil</span>
+            </li>
+            <li class="menu-item" data-page="settings">
+                <i class="fas fa-cog"></i>
+                <span class="menu-text">Pengaturan</span>
             </li>
             <li class="menu-item" id="logout-btn">
                 <i class="fas fa-sign-out-alt"></i>
