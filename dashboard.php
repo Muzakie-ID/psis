@@ -23,8 +23,9 @@ $flash_message = $_SESSION['flash_message'] ?? null;
 $flash_type = $_SESSION['flash_type'] ?? 'error';
 unset($_SESSION['flash_message'], $_SESSION['flash_type']);
 
-$cssPath = file_exists(__DIR__ . '/static/css/style.css') ? 'static/css/style.css' : 'style.css';
-$jsPath = file_exists(__DIR__ . '/static/js/script.js') ? 'static/js/script.js' : 'script.js';
+// Perbaikan cache-busting untuk CSS dan JS
+$cssPath = 'static/css/style.css?v=' . time(); 
+$jsPath = 'static/js/script.js?v=' . time();
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -124,6 +125,16 @@ $jsPath = file_exists(__DIR__ . '/static/js/script.js') ? 'static/js/script.js' 
                         <div class="form-group"><label for="category">Kategori Pengaduan</label><select id="category" name="category" required><option value="">Pilih kategori</option><option value="academic">Akademik</option><option value="facility">Fasilitas Sekolah</option><option value="bullying">Perundungan</option><option value="other">Lainnya</option></select></div>
                         <div class="form-group"><label for="title">Judul Pengaduan</label><input type="text" id="title" name="title" placeholder="Masukkan judul pengaduan" required></div>
                         <div class="form-group"><label for="description">Deskripsi</label><textarea id="description" name="description" rows="5" placeholder="Jelaskan pengaduan Anda secara detail"></textarea></div>
+                        
+                        <div class="form-group">
+                            <label for="urgency">Tingkat Urgensi</label>
+                            <select id="urgency" name="urgency" required>
+                                <option value="low" selected>Rendah</option>
+                                <option value="medium">Sedang</option>
+                                <option value="high">Tinggi</option>
+                            </select>
+                        </div>
+
                         <div class="form-group"><label for="attachment">Lampiran (opsional, maks 5MB)</label><input type="file" id="attachment" name="attachment"></div>
                         <div class="form-group"><button type="submit" class="btn btn-primary">Ajukan Pengaduan</button></div>
                     </form>
@@ -144,9 +155,9 @@ $jsPath = file_exists(__DIR__ . '/static/js/script.js') ? 'static/js/script.js' 
                 <div class="form-container">
                     <div class="form-header"><h2 class="form-title">Ganti Password</h2><p class="form-description">Biarkan kosong jika Anda tidak ingin mengubah password.</p></div>
                     <form action="update_profile.php" method="POST">
-                        <div class="form-group"><label for="old_password">Password Lama</label><input type="password" id="old_password" name="old_password" required></div>
-                        <div class="form-group"><label for="new_password">Password Baru (min. 8 karakter)</label><input type="password" id="new_password" name="new_password" required></div>
-                        <div class="form-group"><label for="confirm_password">Konfirmasi Password Baru</label><input type="password" id="confirm_password" name="confirm_password" required></div>
+                        <div class="form-group"><label for="old_password">Password Lama</label><input type="password" id="old_password" name="old_password"></div>
+                        <div class="form-group"><label for="new_password">Password Baru (min. 8 karakter)</label><input type="password" id="new_password" name="new_password"></div>
+                        <div class="form-group"><label for="confirm_password">Konfirmasi Password Baru</label><input type="password" id="confirm_password" name="confirm_password"></div>
                         <div class="form-group"><button type="submit" name="change_password" class="btn btn-danger">Ganti Password</button></div>
                     </form>
                 </div>
@@ -164,40 +175,12 @@ $jsPath = file_exists(__DIR__ . '/static/js/script.js') ? 'static/js/script.js' 
              </div>
         </div>
     </div>
-
+    
+    <script src="<?= htmlspecialchars($jsPath) ?>"></script>
     <script>
+    // Script ini sengaja saya pindah ke bawah pemanggilan file utama
+    // untuk memastikan semua fungsi dasar sudah dimuat terlebih dahulu.
     document.addEventListener('DOMContentLoaded', function() {
-        if (typeof fetch === 'function') {
-            fetch('get_complaints.php')
-            .then(r => r.json())
-            .then(data => {
-                try {
-                    const list = document.getElementById('complaint-list');
-                    if (!list) return;
-                    list.innerHTML = '';
-                    if (!Array.isArray(data) || data.length === 0) {
-                        list.innerHTML = '<p style="color:#6c757d">Belum ada pengaduan.</p>';
-                        return;
-                    }
-                    data.forEach(c => {
-                        const a = document.createElement('a');
-                        a.href = 'view_complaint.php?id=' + c.id;
-                        a.className = 'complaint-item-link';
-                        a.innerHTML = `<div class="complaint-item">
-                                        <div class="complaint-info">
-                                            <h3>${c.title || ''}</h3>
-                                            <p>Diajukan pada: ${c.created_at || ''}</p>
-                                        </div>
-                                        <div class="status status-${c.status || ''}">${c.status || ''}</div>
-                                       </div>`;
-                        list.appendChild(a);
-                    });
-                } catch(e) {
-                    console.warn('Error render complaints', e);
-                }
-            }).catch(()=>{});
-        }
-        
         const pageTitle = document.getElementById('page-title');
 
         function showPageFromHash() {
@@ -219,26 +202,27 @@ $jsPath = file_exists(__DIR__ . '/static/js/script.js') ? 'static/js/script.js' 
                     }
                 }
             } else {
-                document.getElementById('dashboard-page').classList.add('active');
-                document.querySelector('.menu-item[data-page="dashboard"]').classList.add('active');
-                if (pageTitle) {
-                    pageTitle.textContent = 'Dashboard';
-                }
+                const dashboardPage = document.getElementById('dashboard-page');
+                const dashboardMenuItem = document.querySelector('.menu-item[data-page="dashboard"]');
+                if (dashboardPage) dashboardPage.classList.add('active');
+                if (dashboardMenuItem) dashboardMenuItem.classList.add('active');
+                if (pageTitle) pageTitle.textContent = 'Dashboard';
             }
         }
 
-        showPageFromHash();
+        if (pageTitle) {
+            showPageFromHash();
+            window.addEventListener('hashchange', showPageFromHash);
 
-        document.querySelectorAll('.menu-item[data-page]').forEach(item => {
-            item.addEventListener('click', (event) => {
-                event.preventDefault(); 
-                const pageId = item.getAttribute('data-page');
-                window.location.hash = pageId; 
-                showPageFromHash();
+            document.querySelectorAll('.menu-item[data-page]').forEach(item => {
+                item.addEventListener('click', (event) => {
+                    event.preventDefault(); 
+                    const pageId = item.getAttribute('data-page');
+                    window.location.hash = pageId; 
+                });
             });
-        });
+        }
     });
     </script>
-    <script src="<?= htmlspecialchars($jsPath) ?>"></script>
 </body>
 </html>
