@@ -767,3 +767,38 @@ input:checked + .toggle-slider:before {
     transform: translateY(-3px);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
 }
+/* Style untuk label urgensi */
+.urgency {
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.urgency-low {
+    background: #cce5ff; /* Biru muda */
+    color: #004085;
+}
+
+.urgency-medium {
+    background: #fff3cd; /* Kuning */
+    color: #856404;
+}
+
+.urgency-high {
+    background: #f8d7da; /* Merah muda */
+    color: #721c24;
+}
+
+/* Penyesuaian untuk complaint item */
+.complaint-item {
+    align-items: flex-start; /* Mengubah alignment agar lebih fleksibel */
+}
+
+.status-indicators {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px; /* Memberi jarak antara label urgensi dan status */
+}
