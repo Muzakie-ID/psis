@@ -8,7 +8,7 @@ if (!is_logged_in()) {
 }
 
 $user = current_user($pdo);
-$stmt = $pdo->prepare("SELECT id, title, description, status, DATE_FORMAT(created_at, '%d %M %Y') as created_at FROM complaints WHERE user_id = ? ORDER BY complaints.id DESC LIMIT 20");
+$stmt = $pdo->prepare("SELECT id, title, description, status, urgency, DATE_FORMAT(created_at, '%d %M %Y') as created_at FROM complaints WHERE user_id = ? ORDER BY complaints.id DESC LIMIT 20");
 $stmt->execute([$user['id']]);
 $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
