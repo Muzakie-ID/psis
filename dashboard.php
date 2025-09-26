@@ -23,8 +23,8 @@ $flash_message = $_SESSION['flash_message'] ?? null;
 $flash_type = $_SESSION['flash_type'] ?? 'error';
 unset($_SESSION['flash_message'], $_SESSION['flash_type']);
 
-// Menambahkan versi untuk memaksa browser memuat file terbaru (cache busting)
-$cssPath = 'static/css/style.css?v=' . time();
+// Perbaikan cache-busting untuk CSS dan JS
+$cssPath = 'static/css/style.css?v=' . time(); 
 $jsPath = 'static/js/script.js?v=' . time();
 ?>
 <!DOCTYPE html>
@@ -129,7 +129,7 @@ $jsPath = 'static/js/script.js?v=' . time();
                         <div class="form-group">
                             <label for="urgency">Tingkat Urgensi</label>
                             <select id="urgency" name="urgency" required>
-                                <option value="low">Rendah</option>
+                                <option value="low" selected>Rendah</option>
                                 <option value="medium">Sedang</option>
                                 <option value="high">Tinggi</option>
                             </select>
@@ -155,9 +155,9 @@ $jsPath = 'static/js/script.js?v=' . time();
                 <div class="form-container">
                     <div class="form-header"><h2 class="form-title">Ganti Password</h2><p class="form-description">Biarkan kosong jika Anda tidak ingin mengubah password.</p></div>
                     <form action="update_profile.php" method="POST">
-                        <div class="form-group"><label for="old_password">Password Lama</label><input type="password" id="old_password" name="old_password" required></div>
-                        <div class="form-group"><label for="new_password">Password Baru (min. 8 karakter)</label><input type="password" id="new_password" name="new_password" required></div>
-                        <div class="form-group"><label for="confirm_password">Konfirmasi Password Baru</label><input type="password" id="confirm_password" name="confirm_password" required></div>
+                        <div class="form-group"><label for="old_password">Password Lama</label><input type="password" id="old_password" name="old_password"></div>
+                        <div class="form-group"><label for="new_password">Password Baru (min. 8 karakter)</label><input type="password" id="new_password" name="new_password"></div>
+                        <div class="form-group"><label for="confirm_password">Konfirmasi Password Baru</label><input type="password" id="confirm_password" name="confirm_password"></div>
                         <div class="form-group"><button type="submit" name="change_password" class="btn btn-danger">Ganti Password</button></div>
                     </form>
                 </div>
@@ -177,6 +177,52 @@ $jsPath = 'static/js/script.js?v=' . time();
     </div>
     
     <script src="<?= htmlspecialchars($jsPath) ?>"></script>
-    
+    <script>
+    // Script ini sengaja saya pindah ke bawah pemanggilan file utama
+    // untuk memastikan semua fungsi dasar sudah dimuat terlebih dahulu.
+    document.addEventListener('DOMContentLoaded', function() {
+        const pageTitle = document.getElementById('page-title');
+
+        function showPageFromHash() {
+            const hash = window.location.hash.substring(1);
+            const targetPage = hash || 'dashboard';
+            const pageElement = document.getElementById(targetPage + '-page');
+
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.menu-item[data-page]').forEach(m => m.classList.remove('active'));
+
+            if (pageElement) {
+                pageElement.classList.add('active');
+                const menuItem = document.querySelector(`.menu-item[data-page="${targetPage}"]`);
+                if (menuItem) {
+                    menuItem.classList.add('active');
+                    const menuText = menuItem.querySelector('.menu-text');
+                    if (pageTitle && menuText) {
+                        pageTitle.textContent = menuText.textContent;
+                    }
+                }
+            } else {
+                const dashboardPage = document.getElementById('dashboard-page');
+                const dashboardMenuItem = document.querySelector('.menu-item[data-page="dashboard"]');
+                if (dashboardPage) dashboardPage.classList.add('active');
+                if (dashboardMenuItem) dashboardMenuItem.classList.add('active');
+                if (pageTitle) pageTitle.textContent = 'Dashboard';
+            }
+        }
+
+        if (pageTitle) {
+            showPageFromHash();
+            window.addEventListener('hashchange', showPageFromHash);
+
+            document.querySelectorAll('.menu-item[data-page]').forEach(item => {
+                item.addEventListener('click', (event) => {
+                    event.preventDefault(); 
+                    const pageId = item.getAttribute('data-page');
+                    window.location.hash = pageId; 
+                });
+            });
+        }
+    });
+    </script>
 </body>
 </html>
