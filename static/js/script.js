@@ -68,13 +68,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 a.href = 'view_complaint.php?id=' + c.id;
                 a.className = 'complaint-item-link';
                 a.innerHTML = `
+                                    // Menyiapkan teks dan kelas untuk urgensi
+                const urgencyClass = c.urgency || 'low';
+                const urgencyText = urgencyClass.charAt(0).toUpperCase() + urgencyClass.slice(1);
+
+                a.innerHTML = `
                     <div class="complaint-item">
                         <div class="complaint-info">
                             <h3>${c.title || 'Tanpa Judul'}</h3>
                             <p>Diajukan pada: ${c.created_at || ''}</p>
                         </div>
-                        <div class="status status-${c.status || ''}">${c.status ? c.status.charAt(0).toUpperCase() + c.status.slice(1) : ''}</div>
+                        <div class="status-indicators">
+                            <div class="urgency urgency-${urgencyClass}">${urgencyText}</div>
+                            <div class="status status-${c.status || ''}">${c.status ? c.status.charAt(0).toUpperCase() + c.status.slice(1) : ''}</div>
+                        </div>
                     </div>`;
+
                 complaintList.appendChild(a);
             });
         })
