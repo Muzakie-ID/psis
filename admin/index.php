@@ -171,7 +171,7 @@ $complaints = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <h1>Admin Dashboard</h1>
     <div class="user-menu">
       <span>Halo, <strong><?= htmlspecialchars($user['full_name'] ?: "Admin") ?></strong></span>
-      <a href="../dashboard.php">Lihat Dasbor Siswa</a>
+      <!--<a href="../dashboard.php">Lihat Dasbor Siswa</a>-->
       <a href="../logout.php">Logout</a>
     </div>
   </header>
